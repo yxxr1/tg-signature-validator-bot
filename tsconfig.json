@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "declarations.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
