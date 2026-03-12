@@ -17,6 +17,10 @@ export const checkSig = async (text: string, signature: openpgp.Signature, publi
     }
 }
 export const getSignData = (message: Message.TextMessage): string => {
+    if (process.env.SIGN_MODE === 'text-markup') {
+        return JSON.stringify({ text: message.text, entities: message.entities });
+    }
+
     return message.text;
 }
 

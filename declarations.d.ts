@@ -13,5 +13,6 @@ declare namespace NodeJS {
     CA_TOPIC_ID?: string;
     PUBLISH_DESTINATIONS: string;
     START_MESSAGE?: string;
+    SIGN_MODE?: 'text-plain' | 'text-markup';
   }
 }
