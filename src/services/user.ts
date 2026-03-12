@@ -36,12 +36,12 @@ class UserService {
         const certsData = (await this.model.findOne({ userId }, 'certs').exec())?.certs;
         return certsData?.find((cert) => this.isValidCert(cert, validTs));
     }
-    async getAllCertsData(validOnDate: Date): Promise<{ userId: number; cert: string }[]> {
+    async getAllCertsData(validOnDate: Date): Promise<{ userId: number; cert: string; fileId: string }[]> {
         const validTs = validOnDate.valueOf();
         return (await this.model.find({}, 'userId certs').exec()).map(({ userId, certs }) => {
-            const data = certs?.find((cert) => this.isValidCert(cert, validTs))?.data;
-            return data ? { userId, cert: data } : null;
-        }).filter((el): el is { userId: number; cert: string } => Boolean(el));
+            const cert = certs?.find((cert) => this.isValidCert(cert, validTs));
+            return cert ? { userId, cert: cert.data, fileId: cert.fileId } : null;
+        }).filter((el): el is { userId: number; cert: string; fileId: string } => Boolean(el));
     }
 }
 

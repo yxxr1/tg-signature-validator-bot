@@ -2,7 +2,7 @@ import * as openpgp from "openpgp"
 import {Format, NarrowedContext, Scenes} from "telegraf";
 import {Update, Message, type Document} from "@telegraf/types";
 import {DIRECT_CHAT_COMMANDS} from "@/controller/const"
-import {checkSig, isCertFile, isSigFile, getPublishDestinations, getChatUrl, getFile} from "./helpers"
+import {checkSig, isCertFile, isSigFile, getPublishDestinations, getChatUrl, getFile, formatUserString} from "./helpers"
 import {userService} from "./user"
 import {USER_STATES} from "./const"
 import {ChatMessageId} from "./types"
@@ -46,7 +46,7 @@ class DirectChatService {
 
                 if (userId) {
                     const userInfo = (await ctx.telegram.getChatMember(this.caChatId, userId)).user;
-                    userString = `${userInfo.first_name ? userInfo.first_name + ' ' : ''}${userInfo.last_name ? userInfo.last_name + ' ' : ''}@${userInfo.username}`;
+                    userString = formatUserString(userInfo);
                 }
 
                 return `[${userString}] ${file.file_name}: ${isValid ? 'OK' : 'NOT OK'}`;

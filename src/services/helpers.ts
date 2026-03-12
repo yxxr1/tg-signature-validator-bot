@@ -1,6 +1,6 @@
 import * as openpgp from "openpgp"
 import {Context} from "telegraf";
-import {Document} from "telegraf/types"
+import {Document, User} from "telegraf/types"
 import {buffer} from "node:stream/consumers";
 
 export const checkSig = async (text: string, signature: openpgp.Signature, publicKeys: openpgp.PublicKey[]): Promise<[boolean, openpgp.KeyID | undefined] > => {
@@ -49,3 +49,5 @@ export const getFile = async (ctx: Context, fileId: string) => {
 export const hasValue = <T extends object, K extends keyof T>(obj: T, key: K): obj is T & Required<Pick<T, K>> => {
     return key in obj && obj[key] !== undefined;
 }
+
+export const formatUserString = (user: User) => `${user.first_name ? user.first_name + ' ' : ''}${user.last_name ? user.last_name + ' ' : ''}@${user.username}`
