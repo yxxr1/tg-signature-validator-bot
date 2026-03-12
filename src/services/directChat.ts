@@ -13,6 +13,8 @@ interface WaitVerifyDataStateData {
 }
 export type Context = Scenes.SceneContext<Scenes.SceneSessionData & { state?: { verifyData?: WaitVerifyDataStateData } }>;
 
+type Scenes = Exclude<typeof USER_STATES[keyof typeof USER_STATES], typeof USER_STATES.NoState>;
+
 const CERT_REVOKED_EMOJI = '🙈';
 
 class DirectChatService {
@@ -58,6 +60,15 @@ class DirectChatService {
         return null;
     }
 
+    async enterScene(ctx: Context, name: Scenes, text: string, initialState?: object) {
+        await ctx.scene.enter(name, initialState);
+        await ctx.reply(text, Markup.keyboard([[Markup.button.text('/clear')]]));
+    }
+    async leaveScene(ctx: Context, text: string) {
+        await ctx.scene.leave();
+        await ctx.reply(text, Markup.removeKeyboard());
+    }
+
     async start(ctx: Context) {
         if (this.startMessage) {
             await ctx.reply(this.startMessage);
@@ -68,8 +79,7 @@ class DirectChatService {
         const userCert = await userService.getUserCert(ctx.message.from.id, new Date());
 
         if (!userCert) {
-            await ctx.scene.enter(USER_STATES.WaitPubkey);
-            await ctx.reply('Pubkey ->');
+            await this.enterScene(ctx, USER_STATES.WaitPubkey, 'Pubkey ->')
         } else {
             await ctx.reply(`cert exists, use /${DIRECT_CHAT_COMMANDS.RevokeUserPubkey} to revoke`);
         }
@@ -80,8 +90,7 @@ class DirectChatService {
         const userCert = await userService.getUserCert(userId, new Date());
 
         if (userCert) {
-            await ctx.reply(`cert exists, use /${DIRECT_CHAT_COMMANDS.RevokeUserPubkey} to revoke`);
-            await ctx.scene.leave();
+            await this.leaveScene(ctx, `cert exists, use /${DIRECT_CHAT_COMMANDS.RevokeUserPubkey} to revoke`);
             return;
         }
 
@@ -95,9 +104,8 @@ class DirectChatService {
                 const res = await ctx.telegram.sendDocument(this.caChatId, document.file_id, { message_thread_id: this.caTopicId, caption: `@${ctx.message.from.username}` });
                 const caChatMessageId: ChatMessageId = { chatId: this.caChatId, messageId: res.message_id };
                 await userService.setUserCert(userId, certStr, document.file_id, new Date(), caChatMessageId);
-                
-                await ctx.reply("pubkey saved");
-                await ctx.scene.leave();
+
+                await this.leaveScene(ctx, "pubkey saved");
             } else {
                 await ctx.reply("cert was used");
             }
@@ -122,8 +130,8 @@ class DirectChatService {
     }
 
     async verifySignatureStart(ctx: Context) {
-        await ctx.scene.enter(USER_STATES.WaitVerifyData, { verifyData: { content: '', sigFiles: [] } });
-        await ctx.reply('Content & Sigs ->', Markup.inlineKeyboard([[Markup.button.callback('Verify', CALLBACK_QUERY_DATA.VerifySignature)]]));
+        await this.enterScene(ctx, USER_STATES.WaitVerifyData, 'Content & Sigs ->', { verifyData: { content: '', sigFiles: [] } });
+        await ctx.reply('Verify', Markup.inlineKeyboard([[Markup.button.callback('✅', CALLBACK_QUERY_DATA.VerifySignature)]]));
     }
 
     async verifySignatureContent(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.TextMessage>>) {
@@ -145,8 +153,7 @@ class DirectChatService {
         const messages = await this.verifySignatures(ctx);
 
         if (messages) {
-            await ctx.reply(messages.join('\n'));
-            await ctx.scene.leave();
+            await this.leaveScene(ctx, messages.join('\n'));
         } else {
             await ctx.reply('Content & Sigs ->');
         }
@@ -163,8 +170,7 @@ class DirectChatService {
     }
 
     async clearUserState(ctx: Context) {
-        await ctx.scene.leave();
-        await ctx.reply('OK');
+        await this.leaveScene(ctx, "OK")
     }
 }
 
