@@ -1,6 +1,6 @@
 import * as openpgp from "openpgp"
 import {Context} from "telegraf";
-import {Document, User} from "telegraf/types"
+import {Document, User, Message} from "telegraf/types"
 import {buffer} from "node:stream/consumers";
 
 export const checkSig = async (text: string, signature: openpgp.Signature, publicKeys: openpgp.PublicKey[]): Promise<[boolean, openpgp.KeyID | undefined] > => {
@@ -15,6 +15,9 @@ export const checkSig = async (text: string, signature: openpgp.Signature, publi
     } catch {
         return [false, undefined];
     }
+}
+export const getSignData = (message: Message.TextMessage): string => {
+    return message.text;
 }
 
 export const isCertFile = (document: Document) => document.mime_type === 'application/pgp-signature' && document.file_name?.endsWith('.asc');
@@ -50,4 +53,4 @@ export const hasValue = <T extends object, K extends keyof T>(obj: T, key: K): o
     return key in obj && obj[key] !== undefined;
 }
 
-export const formatUserString = (user: User) => `${user.first_name ? user.first_name + ' ' : ''}${user.last_name ? user.last_name + ' ' : ''}@${user.username}`
+export const formatUserString = (user: User) => `${user.first_name ? user.first_name + ' ' : ''}${user.last_name ? user.last_name + ' ' : ''}@${user.username}`;

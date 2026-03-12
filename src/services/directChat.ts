@@ -2,7 +2,16 @@ import * as openpgp from "openpgp"
 import {Format, NarrowedContext, Scenes, Markup} from "telegraf";
 import {Update, Message, type Document} from "@telegraf/types";
 import {CALLBACK_QUERY_DATA, DIRECT_CHAT_COMMANDS} from "@/controller/const"
-import {checkSig, isCertFile, isSigFile, getPublishDestinations, getChatUrl, getFile, formatUserString} from "./helpers"
+import {
+    checkSig,
+    isCertFile,
+    isSigFile,
+    getPublishDestinations,
+    getChatUrl,
+    getFile,
+    formatUserString,
+    getSignData
+} from "./helpers"
 import {userService} from "./user"
 import {USER_STATES} from "./const"
 import {ChatMessageId} from "./types"
@@ -30,7 +39,7 @@ class DirectChatService {
         this.startMessage = startMessage;
     }
 
-    async verifySignatures(ctx: Context): Promise<string[] | null> {
+    private async verifySignatures(ctx: Context): Promise<string[] | null> {
         const userState = ctx.session.__scenes?.state?.verifyData || { content: '', sigFiles: [] };
 
         if (userState?.content && userState?.sigFiles?.length) {
@@ -60,11 +69,11 @@ class DirectChatService {
         return null;
     }
 
-    async enterScene(ctx: Context, name: Scenes, text: string, initialState?: object) {
+    private async enterScene(ctx: Context, name: Scenes, text: string, initialState?: object) {
         await ctx.scene.enter(name, initialState);
         await ctx.reply(text, Markup.keyboard([[Markup.button.text('/clear')]]));
     }
-    async leaveScene(ctx: Context, text: string) {
+    private async leaveScene(ctx: Context, text: string) {
         await ctx.scene.leave();
         await ctx.reply(text, Markup.removeKeyboard());
     }
@@ -136,7 +145,7 @@ class DirectChatService {
 
     async verifySignatureContent(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.TextMessage>>) {
         if (ctx.session.__scenes?.state?.verifyData) {
-            ctx.session.__scenes.state.verifyData.content = ctx.message.text;
+            ctx.session.__scenes.state.verifyData.content = getSignData(ctx.message);
         }
     }
     async verifySignatureSig(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.DocumentMessage>>) {
