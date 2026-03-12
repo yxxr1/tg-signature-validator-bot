@@ -1,17 +1,21 @@
 import {NarrowedContext, Context} from "telegraf";
-import {Update} from "@telegraf/types";
+import {Update, InlineQueryResultCachedDocument} from "@telegraf/types";
 import {userService} from "@/services/user";
-import {formatUserString} from "@/services/helpers";
-import {InlineQueryResultCachedDocument} from "@telegraf/types";
-
-const INLINE_RESPONSE_LIMIT = 25;
+import {formatUserString} from "../helpers";
+import {INLINE_RESPONSE_LIMIT} from "./const";
 
 class InlineQueryService {
+    caChatId: number;
+
+    constructor(caChatId: string) {
+        this.caChatId = Number(caChatId);
+    }
+
     async inlineQuery(ctx: NarrowedContext<Context, Update.InlineQueryUpdate>) {
         const certs = await userService.getAllCertsData(new Date());
 
         const result: (InlineQueryResultCachedDocument | null)[] = await Promise.all(certs.map(async (cert) => {
-            const user =  await ctx.telegram.getChatMember(process.env.CA_CHAT_ID, cert.userId);
+            const user =  await ctx.telegram.getChatMember(this.caChatId, cert.userId);
 
             return user.user.username?.startsWith(ctx.inlineQuery.query) ? {
                 type: "document" as const,
@@ -37,4 +41,4 @@ class InlineQueryService {
     }
 }
 
-export const inlineQueryService = new InlineQueryService();
+export const inlineQueryService = new InlineQueryService(process.env.CA_CHAT_ID);

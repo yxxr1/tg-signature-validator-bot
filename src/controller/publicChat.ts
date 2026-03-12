@@ -2,8 +2,8 @@ import {Composer, Context} from "telegraf";
 import {allOf, message} from "telegraf/filters";
 import {CommandContextExtn} from "telegraf/src/telegram-types";
 import {publicChatService} from "@/services";
-import {PUBLIC_CHAT_COMMANDS} from "@/controller/const";
-import {replyMessageFilter} from "@/controller/helpers";
+import {PUBLIC_CHAT_COMMANDS} from "./const";
+import {replyMessageFilter} from "./helpers";
 
 type ContextWithCmd = Context & CommandContextExtn;
 

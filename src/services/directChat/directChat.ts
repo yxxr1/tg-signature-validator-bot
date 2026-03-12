@@ -1,7 +1,8 @@
 import * as openpgp from "openpgp"
-import {Format, NarrowedContext, Scenes, Markup} from "telegraf";
-import {Update, Message, type Document} from "@telegraf/types";
-import {CALLBACK_QUERY_DATA, DIRECT_CHAT_COMMANDS} from "@/controller/const"
+import {Format, NarrowedContext, Markup} from "telegraf";
+import {Update, Message} from "@telegraf/types";
+import {DIRECT_CHAT_COMMANDS} from "@/controller/const"
+import {userService} from "@/services/user"
 import {
     checkSig,
     isCertFile,
@@ -11,31 +12,23 @@ import {
     getFile,
     formatUserString,
     getSignData
-} from "./helpers"
-import {userService} from "./user"
-import {USER_STATES} from "./const"
-import {ChatMessageId} from "./types"
-
-interface WaitVerifyDataStateData {
-    content: string;
-    sigFiles: Document[];
-}
-export type Context = Scenes.SceneContext<Scenes.SceneSessionData & { state?: { verifyData?: WaitVerifyDataStateData } }>;
-
-type Scenes = Exclude<typeof USER_STATES[keyof typeof USER_STATES], typeof USER_STATES.NoState>;
+} from "../helpers"
+import {ChatMessageId} from "../types";
+import {USER_STATES, CALLBACK_QUERY_DATA} from "./const"
+import {Context} from "./types";
 
 const CERT_REVOKED_EMOJI = '🙈';
 
 class DirectChatService {
     caChatId: number;
     caTopicId?: number;
-    publishDestinations: string;
+    publishDestinations: ReturnType<typeof getPublishDestinations>;
     startMessage?: string;
 
-    constructor(caChatId: string, caTopicId?: string, publishDestinations?: string, startMessage?: string) {
+    constructor(publishDestinations: string, caChatId: string, caTopicId?: string, startMessage?: string) {
         this.caChatId = Number(caChatId);
         this.caTopicId = caTopicId ? Number(caTopicId) : undefined;
-        this.publishDestinations = publishDestinations || '';
+        this.publishDestinations = getPublishDestinations(publishDestinations);
         this.startMessage = startMessage;
     }
 
@@ -69,7 +62,7 @@ class DirectChatService {
         return null;
     }
 
-    private async enterScene(ctx: Context, name: Scenes, text: string, initialState?: object) {
+    private async enterScene(ctx: Context, name: Exclude<typeof USER_STATES[keyof typeof USER_STATES], typeof USER_STATES.NoState>, text: string, initialState?: object) {
         await ctx.scene.enter(name, initialState);
         await ctx.reply(text, Markup.keyboard([[Markup.button.text('/clear')]]));
     }
@@ -169,7 +162,7 @@ class DirectChatService {
     }
 
     async publishAliases(ctx: Context) {
-        const textArr = Object.entries(getPublishDestinations(this.publishDestinations))
+        const textArr = Object.entries(this.publishDestinations)
             .map(([alias, { chatId, threadId }]) => Format.link(alias, getChatUrl(chatId, threadId)), []);
         await ctx.reply(Format.join(textArr, ' '));
     }
@@ -183,4 +176,4 @@ class DirectChatService {
     }
 }
 
-export const directChatService = new DirectChatService(process.env.CA_CHAT_ID, process.env.CA_TOPIC_ID, process.env.PUBLISH_DESTINATIONS, process.env.START_MESSAGE);
+export const directChatService = new DirectChatService(process.env.PUBLISH_DESTINATIONS, process.env.CA_CHAT_ID, process.env.CA_TOPIC_ID, process.env.START_MESSAGE);

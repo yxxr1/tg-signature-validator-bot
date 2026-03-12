@@ -1,7 +1,8 @@
 import mongoose from "mongoose"
 import mongodb from "mongodb"
-import {messageSignatureModel} from "@/model/messageSignature"
-import {MessageSignature, SignatureRecord, ChatMessageId, ModelType} from "./types"
+import {messageSignatureModel} from "@/model"
+import {ModelType, ChatMessageId} from "../types"
+import {MessageSignature, SignatureRecord} from "./types"
 
 class MessageSignatureService {
     model: mongoose.Model<ModelType<MessageSignature>>;

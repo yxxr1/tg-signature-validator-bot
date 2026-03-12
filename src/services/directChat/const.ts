@@ -3,3 +3,7 @@ export const USER_STATES = {
     WaitPubkey: 'WAIT_PUBKEY',
     WaitVerifyData: 'WAIT_VERIFY_DATA'
 } as  const;
+
+export const CALLBACK_QUERY_DATA = {
+    VerifySignature: 'verify',
+}

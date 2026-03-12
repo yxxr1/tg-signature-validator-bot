@@ -1,0 +1,1 @@
+export const INLINE_RESPONSE_LIMIT = 25;

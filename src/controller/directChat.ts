@@ -1,7 +1,7 @@
 import {Scenes, Composer} from "telegraf";
 import {message} from "telegraf/filters";
-import {directChatService, USER_STATES, DirectChatContext} from "@/services";
-import {CALLBACK_QUERY_DATA, DIRECT_CHAT_COMMANDS} from "./const";
+import {directChatService, DIRECT_CHAT_USER_STATES, DirectChatContext, DIRECT_CHAT_CALLBACK_QUERY_DATA} from "@/services";
+import {DIRECT_CHAT_COMMANDS} from "./const";
 import {callbackQueryDataFilter} from "./helpers";
 
 const addStateCommands = (composer: Composer<DirectChatContext>) => {
@@ -9,14 +9,14 @@ const addStateCommands = (composer: Composer<DirectChatContext>) => {
     composer.command(DIRECT_CHAT_COMMANDS.ClearBotUserState, (ctx) => directChatService.clearUserState(ctx));
 }
 
-const setPubkeyScene = new Scenes.BaseScene<DirectChatContext>(USER_STATES.WaitPubkey);
+const setPubkeyScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_USER_STATES.WaitPubkey);
 addStateCommands(setPubkeyScene);
 setPubkeyScene.on(message('document'), (ctx) => directChatService.waitPubkeyState(ctx));
 setPubkeyScene.use((ctx) => ctx.reply("pubkey expected"));
 
-const verifyDataScene = new Scenes.BaseScene<DirectChatContext>(USER_STATES.WaitVerifyData);
+const verifyDataScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_USER_STATES.WaitVerifyData);
 addStateCommands(verifyDataScene);
-verifyDataScene.on(callbackQueryDataFilter(CALLBACK_QUERY_DATA.VerifySignature), async (ctx) => {
+verifyDataScene.on(callbackQueryDataFilter(DIRECT_CHAT_CALLBACK_QUERY_DATA.VerifySignature), async (ctx) => {
     await directChatService.verifySignatureEnd(ctx);
     await ctx.telegram.answerCbQuery(ctx.callbackQuery.id);
 });

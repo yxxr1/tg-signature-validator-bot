@@ -1,0 +1,1 @@
+export {inlineQueryService} from "./inlineQuery";

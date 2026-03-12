@@ -1,7 +1,8 @@
 import mongoose from "mongoose"
 import mongodb from "mongodb"
-import {userModel} from "@/model/user"
-import {User, CertRecord, ChatMessageId, ModelType} from "./types"
+import {userModel} from "@/model"
+import {ModelType, ChatMessageId} from "../types";
+import {User, CertRecord} from "./types"
 
 class UserService {
     model: mongoose.Model<ModelType<User>>;

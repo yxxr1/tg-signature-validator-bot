@@ -2,20 +2,17 @@ import * as openpgp from "openpgp"
 import {Context, NarrowedContext} from "telegraf";
 import {Message, Update} from "@telegraf/types";
 import {CommandContextExtn} from "telegraf/src/telegram-types";
-import {isSigFile, checkSig, getPublishDestinations, getFile, getSignData} from "./helpers"
-import {userService} from "./user"
-import {messageSignatureService} from "./messageSignature"
-import {ChatMessageId, SignatureRecord} from "./types"
-
-const SUCCESS_EMOJI = '👍';
-const FAILURE_EMOJI = '👎';
-const FORBIDDEN_EMOJI = '😡';
+import {userService} from "@/services/user"
+import {messageSignatureService, SignatureRecord} from "@/services/messageSignature"
+import {ChatMessageId} from "../types"
+import {isSigFile, checkSig, getPublishDestinations, getFile, getSignData} from "../helpers"
+import {REACTION_EMOJI} from "./const"
 
 class PublicChatService {
     publishDestinations: ReturnType<typeof getPublishDestinations>;
 
-    constructor(publishDestinations: ReturnType<typeof getPublishDestinations>) {
-        this.publishDestinations = publishDestinations;
+    constructor(publishDestinations: string) {
+        this.publishDestinations = getPublishDestinations(publishDestinations);
     }
 
     private async getActualSignaturesData(ctx: Context, signersChatId: number, contentMessageData: ChatMessageId, signData: string): Promise<{ sigFileIds: string[]; needSigCount: number }> {
@@ -66,18 +63,18 @@ class PublicChatService {
                 isSigValid = (await checkSig(getSignData(contentMessage), signature, [userCert]))[0];
             }
 
-            let reaction: typeof SUCCESS_EMOJI | typeof FAILURE_EMOJI;
+            let reaction: typeof REACTION_EMOJI.SUCCESS | typeof REACTION_EMOJI.FAILURE;
 
             if (isSigValid) {
                 await messageSignatureService.addMessageSignature(contentMessageData, userId, document.file_id, messageSigDate);
-                reaction = SUCCESS_EMOJI;
+                reaction = REACTION_EMOJI.SUCCESS;
             } else {
-                reaction = FAILURE_EMOJI;
+                reaction = REACTION_EMOJI.FAILURE;
             }
 
             await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: reaction }]);
         } else {
-            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: FORBIDDEN_EMOJI }]);
+            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.FORBIDDEN }]);
         }
     }
 
@@ -96,9 +93,9 @@ class PublicChatService {
 
         if (userMessageSig) {
             await messageSignatureService.removeMessageUserSignature(contentMessageData, userId);
-            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: SUCCESS_EMOJI }]);
+            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.SUCCESS }]);
         } else {
-            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: FORBIDDEN_EMOJI }]);
+            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.FORBIDDEN }]);
         }
     }
 
@@ -121,13 +118,13 @@ class PublicChatService {
                     const publishedMessage = await ctx.telegram.sendMessage(destinationChatId, contentMessage.text, { message_thread_id: destinationThreadId, entities: contentMessage.entities });
                     await ctx.telegram.sendMediaGroup(destinationChatId, sigFileIds.map(fileId => ({ type: 'document', media: fileId })), { message_thread_id: destinationThreadId, reply_parameters: { message_id: publishedMessage.message_id } });
                 }));
-                await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: SUCCESS_EMOJI }]);
+                await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.SUCCESS }]);
             } else {
                 await ctx.telegram.sendMessage(chatId, `${sigFileIds.length}/${needSigCount} sigs`, { message_thread_id: threadId });
-                await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: FORBIDDEN_EMOJI }]);
+                await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.FORBIDDEN }]);
             }
         } else {
-            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: FORBIDDEN_EMOJI }]);
+            await ctx.telegram.setMessageReaction(chatId, messageId, [{ type: 'emoji', emoji: REACTION_EMOJI.FORBIDDEN }]);
         }
     }
 
@@ -159,4 +156,4 @@ class PublicChatService {
     }
 }
 
-export const publicChatService = new PublicChatService(getPublishDestinations(process.env.PUBLISH_DESTINATIONS || ''));
+export const publicChatService = new PublicChatService(process.env.PUBLISH_DESTINATIONS);
