@@ -4,6 +4,7 @@ import {Telegraf, session, Composer, Context} from "telegraf";
 import {Mongo as MongoSession} from "@telegraf/session/mongodb";
 import {validateEnvs, queueMiddleware} from "@/helpers";
 import {controller} from "@/controller";
+import * as process from "node:process";
 
 validateEnvs();
 
@@ -28,13 +29,14 @@ const start = async () => {
 
   const opts: Telegraf.LaunchOptions = process.env.DEV ? {} : {
     webhook: {
-      domain: process.env.HOST,
+      domain: `${process.env.HOST}:${port}`,
+      host: process.env.HOST,
       path: '/tg-signature-validator-bot-webhook',
       port,
       secretToken: process.env.SECRET_TOKEN,
       ...(credentials ? {
         tlsOptions: credentials,
-        certificate: { source: Buffer.from(credentials.cert) }
+        certificate: { source: Buffer.from(credentials.cert), filename: 'certificate' }
       } : {}),
     },
   };
