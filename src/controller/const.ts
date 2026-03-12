@@ -14,3 +14,7 @@ export const PUBLIC_CHAT_COMMANDS = {
     StateSignMessage: 'state_sigs',
     GetSignData: 'get_sign_data'
 } as const;
+
+export const CALLBACK_QUERY_DATA = {
+    VerifySignature: 'verify',
+}

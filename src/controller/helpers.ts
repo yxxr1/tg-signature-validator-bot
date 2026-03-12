@@ -1,5 +1,5 @@
 import {Context, Middleware} from "telegraf";
-import type {Message, Update} from "@telegraf/types";
+import type {Message, Update, CallbackQuery} from "@telegraf/types";
 import {DistinctKeys} from "telegraf/src/core/helpers/util";
 import {KeyedDistinct} from "telegraf/typings/core/helpers/util";
 
@@ -29,3 +29,7 @@ export const replyMessageFilter =
             }
             return true
         }
+
+export const callbackQueryDataFilter = <T extends string>(value: T) => (update: Update): update is Update.CallbackQueryUpdate<CallbackQuery.DataQuery & { data: T}> => {
+    return 'callback_query' in update && 'data' in update.callback_query && update.callback_query.data === value;
+}

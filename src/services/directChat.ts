@@ -1,7 +1,7 @@
 import * as openpgp from "openpgp"
-import {Format, NarrowedContext, Scenes} from "telegraf";
+import {Format, NarrowedContext, Scenes, Markup} from "telegraf";
 import {Update, Message, type Document} from "@telegraf/types";
-import {DIRECT_CHAT_COMMANDS} from "@/controller/const"
+import {CALLBACK_QUERY_DATA, DIRECT_CHAT_COMMANDS} from "@/controller/const"
 import {checkSig, isCertFile, isSigFile, getPublishDestinations, getChatUrl, getFile, formatUserString} from "./helpers"
 import {userService} from "./user"
 import {USER_STATES} from "./const"
@@ -123,7 +123,7 @@ class DirectChatService {
 
     async verifySignatureStart(ctx: Context) {
         await ctx.scene.enter(USER_STATES.WaitVerifyData, { verifyData: { content: '', sigFiles: [] } });
-        await ctx.reply('Content & Sigs ->');
+        await ctx.reply('Content & Sigs ->', Markup.inlineKeyboard([[Markup.button.callback('Verify', CALLBACK_QUERY_DATA.VerifySignature)]]));
     }
 
     async verifySignatureContent(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.TextMessage>>) {
