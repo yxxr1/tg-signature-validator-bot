@@ -1,9 +1,8 @@
-export const USER_STATES = {
-    NoState: 'NOSTATE',
-    WaitPubkey: 'WAIT_PUBKEY',
-    WaitVerifyData: 'WAIT_VERIFY_DATA'
+export const SCENES = {
+    SetPubkey: 'SET_PUBKEY',
+    VerifySignature: 'VERIFY'
 } as  const;
 
 export const CALLBACK_QUERY_DATA = {
-    VerifySignature: 'verify',
-}
+    VerifySignature: 'VERIFY',
+} as const;

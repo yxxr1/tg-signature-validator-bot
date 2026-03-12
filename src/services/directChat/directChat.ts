@@ -14,7 +14,7 @@ import {
     getSignData
 } from "../helpers"
 import {ChatMessageId} from "../types";
-import {USER_STATES, CALLBACK_QUERY_DATA} from "./const"
+import {SCENES, CALLBACK_QUERY_DATA} from "./const"
 import {Context} from "./types";
 
 const CERT_REVOKED_EMOJI = '🙈';
@@ -33,17 +33,17 @@ class DirectChatService {
     }
 
     private async verifySignatures(ctx: Context): Promise<string[] | null> {
-        const userState = ctx.session.__scenes?.state?.verifyData || { content: '', sigFiles: [] };
+        const state = ctx.session.__scenes?.state?.verifyData || { content: '', sigFiles: [] };
 
-        if (userState?.content && userState?.sigFiles?.length) {
-            const messages = await Promise.all(userState.sigFiles.map(async (file) => {
+        if (state?.content && state?.sigFiles?.length) {
+            const messages = await Promise.all(state.sigFiles.map(async (file) => {
                 const sigFile = await getFile(ctx, file.file_id);
                 const signature = await openpgp.readSignature({ binarySignature: sigFile });
                 const signatureCreated = signature.packets[0].created;
                 const certsData = signatureCreated ? await userService.getAllCertsData(signatureCreated) : [];
                 const pubkeys = await Promise.all(certsData.map(({ cert }) => openpgp.readKey({ armoredKey: cert })));
 
-                const [isValid, keyId] = await checkSig(userState.content, signature, pubkeys);
+                const [isValid, keyId] = await checkSig(state.content, signature, pubkeys);
                 const pubkeyIndex = keyId ? pubkeys.findIndex((pubkey) => pubkey.getKeyID().equals(keyId)) : -1;
                 const userId: number | undefined = certsData[pubkeyIndex]?.userId;
                 let userString = 'Unknown';
@@ -62,9 +62,9 @@ class DirectChatService {
         return null;
     }
 
-    private async enterScene(ctx: Context, name: Exclude<typeof USER_STATES[keyof typeof USER_STATES], typeof USER_STATES.NoState>, text: string, initialState?: object) {
+    private async enterScene(ctx: Context, name: typeof SCENES[keyof typeof SCENES], text: string, initialState?: object) {
         await ctx.scene.enter(name, initialState);
-        await ctx.reply(text, Markup.keyboard([[Markup.button.text('/clear')]]));
+        await ctx.reply(text, Markup.keyboard([[Markup.button.text(`/${DIRECT_CHAT_COMMANDS.LeaveCurrentScene}`)]]));
     }
     private async leaveScene(ctx: Context, text: string) {
         await ctx.scene.leave();
@@ -81,13 +81,13 @@ class DirectChatService {
         const userCert = await userService.getUserCert(ctx.message.from.id, new Date());
 
         if (!userCert) {
-            await this.enterScene(ctx, USER_STATES.WaitPubkey, 'Pubkey ->')
+            await this.enterScene(ctx, SCENES.SetPubkey, 'Pubkey ->')
         } else {
             await ctx.reply(`cert exists, use /${DIRECT_CHAT_COMMANDS.RevokeUserPubkey} to revoke`);
         }
     }
 
-    async waitPubkeyState(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.DocumentMessage>>) {
+    async waitPubkeyDocument(ctx: NarrowedContext<Context, Update.MessageUpdate<Message.DocumentMessage>>) {
         const userId = ctx.message.from.id;
         const userCert = await userService.getUserCert(userId, new Date());
 
@@ -132,7 +132,7 @@ class DirectChatService {
     }
 
     async verifySignatureStart(ctx: Context) {
-        await this.enterScene(ctx, USER_STATES.WaitVerifyData, 'Content & Sigs ->', { verifyData: { content: '', sigFiles: [] } });
+        await this.enterScene(ctx, SCENES.VerifySignature, 'Content & Sigs ->', { verifyData: { content: '', sigFiles: [] } });
         await ctx.reply('Verify', Markup.inlineKeyboard([[Markup.button.callback('✅', CALLBACK_QUERY_DATA.VerifySignature)]]));
     }
 
@@ -167,11 +167,11 @@ class DirectChatService {
         await ctx.reply(Format.join(textArr, ' '));
     }
 
-    async getUserState(ctx: Context) {
-        await ctx.reply(ctx.session.__scenes?.current || USER_STATES.NoState);
+    async getCurrentScene(ctx: Context) {
+        await ctx.reply(ctx.session.__scenes?.current || 'No Scene');
     }
 
-    async clearUserState(ctx: Context) {
+    async leaveCurrentScene(ctx: Context) {
         await this.leaveScene(ctx, "OK")
     }
 }

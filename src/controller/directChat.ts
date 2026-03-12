@@ -1,20 +1,20 @@
 import {Scenes, Composer} from "telegraf";
 import {message} from "telegraf/filters";
-import {directChatService, DIRECT_CHAT_USER_STATES, DirectChatContext, DIRECT_CHAT_CALLBACK_QUERY_DATA} from "@/services";
+import {directChatService, DIRECT_CHAT_SCENES, DirectChatContext, DIRECT_CHAT_CALLBACK_QUERY_DATA} from "@/services";
 import {DIRECT_CHAT_COMMANDS} from "./const";
 import {callbackQueryDataFilter} from "./helpers";
 
 const addStateCommands = (composer: Composer<DirectChatContext>) => {
-    composer.command(DIRECT_CHAT_COMMANDS.BotUserState, (ctx) => directChatService.getUserState(ctx));
-    composer.command(DIRECT_CHAT_COMMANDS.ClearBotUserState, (ctx) => directChatService.clearUserState(ctx));
+    composer.command(DIRECT_CHAT_COMMANDS.CurrentScene, (ctx) => directChatService.getCurrentScene(ctx));
+    composer.command(DIRECT_CHAT_COMMANDS.LeaveCurrentScene, (ctx) => directChatService.leaveCurrentScene(ctx));
 }
 
-const setPubkeyScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_USER_STATES.WaitPubkey);
+const setPubkeyScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_SCENES.SetPubkey);
 addStateCommands(setPubkeyScene);
-setPubkeyScene.on(message('document'), (ctx) => directChatService.waitPubkeyState(ctx));
+setPubkeyScene.on(message('document'), (ctx) => directChatService.waitPubkeyDocument(ctx));
 setPubkeyScene.use((ctx) => ctx.reply("pubkey expected"));
 
-const verifyDataScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_USER_STATES.WaitVerifyData);
+const verifyDataScene = new Scenes.BaseScene<DirectChatContext>(DIRECT_CHAT_SCENES.VerifySignature);
 addStateCommands(verifyDataScene);
 verifyDataScene.on(callbackQueryDataFilter(DIRECT_CHAT_CALLBACK_QUERY_DATA.VerifySignature), async (ctx) => {
     await directChatService.verifySignatureEnd(ctx);

@@ -3,8 +3,8 @@ export const DIRECT_CHAT_COMMANDS = {
     RevokeUserPubkey: 'revoke_pubkey',
     VerifySignature: 'verify',
     PublishAliases: 'alias',
-    BotUserState: 'state',
-    ClearBotUserState: 'clear'
+    CurrentScene: 'scene',
+    LeaveCurrentScene: 'leave'
 } as const;
 
 export const PUBLIC_CHAT_COMMANDS = {
